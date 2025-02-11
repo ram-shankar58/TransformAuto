@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-AIPROXY_TOKEN = os.getenv("AIPROXY_TOKEN")
+AIPROXY_TOKEN = os.getenv("eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6IjIzZjEwMDIyOTZAZHMuc3R1ZHkuaWl0bS5hYy5pbiJ9.EQkfHBbkPWnkr_vqh2skH55RP6f8ruAZeOBKSIElFk0")
 
 # Initialize OpenAI client
 client = OpenAI(api_key=AIPROXY_TOKEN)
