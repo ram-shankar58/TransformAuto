@@ -3,13 +3,20 @@ import os
 import subprocess
 import requests
 from handlers import process_task
+import urllib.request
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 
-DATA_DIR = "data"
+DATA_DIR = os.getenv("DATA_ROOT", os.path.join(os.getcwd(), "data"))
 os.makedirs(DATA_DIR, exist_ok=True)  # Ensure the data directory exists
+DATAGEN_PATH = os.path.join(DATA_DIR, "datagen.py")
+DATAGEN_URL = "https://raw.githubusercontent.com/sanand0/tools-in-data-science-public/tds-2025-01/project-1/datagen.py"
 
-USER_EMAIL = os.getenv("USER_EMAIL", "default@example.com")  # Set user email from env
+USER_EMAIL = os.getenv("USER_EMAIL", "23f1002296@ds.study.iitm.ac.in")  # Set user email from env
 
 # Ensure `uv` is installed
 def ensure_uv_installed():
@@ -19,19 +26,32 @@ def ensure_uv_installed():
         print("Installing uv...")
         subprocess.run(["pip", "install", "uv"], check=True)
 
-# Download and run `datagen.py`
 def setup_data():
-    datagen_url = "https://raw.githubusercontent.com/sanand0/tools-in-data-science-public/tds-2025-01/project-1/datagen.py"
+    """Download and run datagen.py while forcing a new data directory."""
     datagen_path = os.path.join(DATA_DIR, "datagen.py")
 
-    if not os.path.exists(datagen_path):  # Download only if missing
-        print("Downloading datagen.py...")
-        response = requests.get(datagen_url)
-        with open(datagen_path, "wb") as f:
-            f.write(response.content)
+    # Ensure data directory exists
+    os.makedirs(DATA_DIR, exist_ok=True)
 
-    print("Running datagen.py to generate data...")
-    subprocess.run(["python", datagen_path, USER_EMAIL], check=True)
+    # If datagen.py is missing, download it
+    if not os.path.exists(datagen_path):
+        urllib.request.urlretrieve(DATAGEN_URL, datagen_path)
+        print(f"Downloaded datagen.py to {datagen_path}")
+
+    # ✅ Run datagen.py with a forced data root
+    try:
+        env = os.environ.copy()
+        env["DATA_ROOT"] = DATA_DIR  # Override any internal settings
+
+        subprocess.run(
+            ["python", datagen_path, USER_EMAIL, "--root", DATA_DIR],
+            check=True,
+            cwd=DATA_DIR,  # Ensure it runs in the correct directory
+            env=env  # Pass modified environment
+        )
+        print("Data generation completed successfully.")
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Error running datagen.py: {e.stderr}")
 
 # Run setup on startup
 ensure_uv_installed()

@@ -45,12 +45,11 @@ def process_task(task):
     else:
         raise ValueError("Unknown task. Cannot process.")
 
-
 def run_uv_and_generate_data(task):
     """Installs UV (if necessary) and runs the data generation script."""
     subprocess.run(["pip", "install", "--upgrade", "uv"], check=True)
     script_url = "https://raw.githubusercontent.com/sanand0/tools-in-data-science-public/tds-2025-01/project-1/datagen.py"
-    user_email = "test@example.com"  # TODO: Extract email from task
+    user_email = "23f1002296@ds.study.iitm.ac.in"  # TODO: Extract email from task
     subprocess.run(["python3", script_url, user_email], check=True)
     return "Data generated successfully."
 
@@ -62,14 +61,10 @@ def format_file_with_prettier(task):
 
 def count_specific_weekday(task):
     """Counts occurrences of a specific weekday from a date file."""
-    input_file = os.path.join(DATA_DIR, "dates.txt")
-    output_file = os.path.join(DATA_DIR, "dates-wednesdays.txt")
-    
-    count = count_weekdays(input_file, "Wednesday")
-    with open(output_file, "w") as f:
-        f.write(str(count))
-    
-    return f"Counted {count} Wednesdays."
+    date_file = os.path.join(DATA_DIR, "dates.txt")
+    weekday = task.split()[-1]  # Extract weekday from task
+    count = count_weekdays(date_file, weekday)
+    return f"{weekday} occurs {count} times."
 
 def sort_contacts_json():
     """Sorts contacts.json by last_name and first_name."""
@@ -85,6 +80,47 @@ def sort_contacts_json():
         json.dump(contacts, f, indent=4)
 
     return "Contacts sorted successfully."
+
+def extract_recent_logs():
+    """Extracts recent log files."""
+    log_dir = os.path.join(DATA_DIR, "logs")
+    recent_logs = []
+    for log_file in os.listdir(log_dir):
+        if log_file.endswith(".log"):
+            with open(os.path.join(log_dir, log_file)) as f:
+                recent_logs.append(f.read())
+    return "\n".join(recent_logs)
+
+def generate_markdown_index():
+    """Generates an index of Markdown titles."""
+    markdown_dir = os.path.join(DATA_DIR, "docs")
+    index = extract_markdown_titles(markdown_dir)
+    return index
+
+def extract_email_sender():
+    """Extracts the sender from an email file."""
+    email_file = os.path.join(DATA_DIR, "email.txt")
+    with open(email_file) as f:
+        for line in f:
+            if line.startswith("From:"):
+                return line.strip()
+    return "Sender not found."
+
+def extract_credit_card_number():
+    """Extracts credit card number from an image."""
+    image_file = os.path.join(DATA_DIR, "credit_card.png")
+    # Assuming OCR is used to extract text from the image
+    import pytesseract
+    text = pytesseract.image_to_string(image_file)
+    return text
+
+def find_similar_comments():
+    """Finds similar comments from a comments file."""
+    comments_file = os.path.join(DATA_DIR, "comments.txt")
+    with open(comments_file) as f:
+        comments = f.readlines()
+    similar_comments = query_llm(comments)
+    return similar_comments
 
 def calculate_ticket_sales():
     """Calculates total sales from an SQLite database."""
