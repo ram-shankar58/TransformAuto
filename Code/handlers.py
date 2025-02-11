@@ -3,47 +3,48 @@ import subprocess
 import json
 import sqlite3
 from datetime import datetime
-from llm import query_llm
+from llm import query_llm  # This should parse the intent
 from utils import count_weekdays, extract_markdown_titles
 
 DATA_DIR = "data"
 
+# Function mapping for automation tasks
+TASK_FUNCTIONS = {
+    "install_uv_and_generate_data": "run_uv_and_generate_data",
+    "format_markdown": "format_file_with_prettier",
+    "count_weekday_occurrences": "count_specific_weekday",
+    "sort_contacts": "sort_contacts_json",
+    "extract_recent_logs": "extract_recent_logs",
+    "generate_markdown_index": "generate_markdown_index",
+    "extract_email_sender": "extract_email_sender",
+    "extract_credit_card_number": "extract_credit_card_number",
+    "find_similar_comments": "find_similar_comments",
+    "calculate_total_sales": "calculate_ticket_sales",
+}
+
 def process_task(task):
     """
-    Handles different automation tasks based on the given natural language description.
+    Uses the LLM to interpret the request and execute the corresponding function.
     """
-    if "install uv" in task and "run" in task:
-        return run_uv_and_generate_data(task)
+    print(f"Received task: {task}")  # Debugging log
 
-    elif "format" in task and "prettier" in task:
-        return format_file_with_prettier(task)
+    # 🔥 Ask LLM to extract intent
+    parsed_intent = query_llm(task)
+    print(f"LLM parsed intent: {parsed_intent}")
 
-    elif "count the number of" in task:
-        return count_specific_weekday(task)
+    if parsed_intent not in TASK_FUNCTIONS:
+        raise ValueError(f"Unknown task. Cannot process: {parsed_intent}")
 
-    elif "sort contacts" in task:
-        return sort_contacts_json()
+    # Dynamically call the function
+    function_name = TASK_FUNCTIONS[parsed_intent]
+    function_to_call = globals().get(function_name)
 
-    elif "recent log files" in task:
-        return extract_recent_logs()
-
-    elif "extract markdown titles" in task:
-        return generate_markdown_index()
-
-    elif "extract email sender" in task:
-        return extract_email_sender()
-
-    elif "extract credit card number" in task:
-        return extract_credit_card_number()
-
-    elif "find similar comments" in task:
-        return find_similar_comments()
-
-    elif "calculate total sales" in task:
-        return calculate_ticket_sales()
-
+    if function_to_call:
+        return function_to_call(task)
     else:
-        raise ValueError("Unknown task. Cannot process.")
+        raise ValueError(f"Function '{function_name}' not found.")
+
+# 🔽 🔽 INDIVIDUAL TASK FUNCTIONS BELOW 🔽 🔽
 
 def run_uv_and_generate_data(task):
     """Installs UV (if necessary) and runs the data generation script."""
@@ -109,7 +110,6 @@ def extract_email_sender():
 def extract_credit_card_number():
     """Extracts credit card number from an image."""
     image_file = os.path.join(DATA_DIR, "credit_card.png")
-    # Assuming OCR is used to extract text from the image
     import pytesseract
     text = pytesseract.image_to_string(image_file)
     return text
